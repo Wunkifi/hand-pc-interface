@@ -1,33 +1,34 @@
-# importing libraries
+from ultralytics import YOLO
 import cv2
 
-# Create a VideoCapture object and read from input file
+# Load a pre-trained model
+model = YOLO(r'Model\best.pt')
+
+# Open webcam (0 = default)
 cap = cv2.VideoCapture(0)
 
-# Check if camera opened successfully
-if (cap.isOpened()== False):
-    print("Error opening video file")
+if not cap.isOpened():
+    print("❌ Cannot open webcam")
+    exit()
 
-# Read until video is completed
-while(cap.isOpened()):
-    
-# Capture frame-by-frame
+while True:
     ret, frame = cap.read()
-    if ret == True:
-    # Display the resulting frame
-        cv2.imshow('Frame', frame)
-        
-    # Press Q on keyboard to exit
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-
-# Break the loop
-    else:
+    if not ret:
         break
 
-# When everything done, release
-# the video capture object
-cap.release()
+    # Run pose prediction on the frame
+    results = model.predict(source=frame, conf=0.3, task='pose', verbose=False)
 
-# Closes all the frames
+    # Annotate frame with keypoints and bounding boxes
+    annotated_frame = results[0].plot()
+
+    # Show the result
+    cv2.imshow("Live Pose Detection", annotated_frame)
+
+    # Exit when 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+# Cleanup
+cap.release()
 cv2.destroyAllWindows()
